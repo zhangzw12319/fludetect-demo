@@ -59,7 +59,7 @@ for each_path in all_paths:
     gp_input_dict = preP.split_data_by_time(X=None, Y=data.Y, time=data.time, split_dict=gp_input_dict)
     gp_output_dict = preP.read_CSV("ILINet.csv")
 
-    data.clear_data(
+    data.clear_data()
 
 
 print(gp_input_dict)
