@@ -2,14 +2,15 @@ import json
 import re
 import utils
 import numpy as np
-from scipy.sparse import coo_matrix
+from scipy.sparse import csr_matrix
+
 
 
 
 
 class Data:
     json_path = ""
-    corpus_dict = []  # 把json文件里的所有json对象放在data_dict_array数组里
+    corpus_dict_batch = []  # 把json文件里的所有json对象放在data_dict_array数组里
     text_array = []
     X = []
     Y = []
@@ -20,8 +21,14 @@ class Data:
 
     def __init__(self, path=""):
         self.json_path = path
-        self.corpus_dict = []
-        self.label_array =[]
+        self.corpus_dict_batch = [] # storing each json file in the corpus(per batch)
+        self.size = 0
+        self.X = []
+        self.Y = []
+        self.time = []
+
+    def clear_data(self):
+        self.corpus_dict_batch=[]
         self.size = 0
         self.X = []
         self.Y = []
@@ -32,25 +39,27 @@ class Data:
             for line in load_f:
                 # print(line)
                 data_dict = json.loads(line)
-                self.corpus_dict.append(data_dict)
+                self.corpus_dict_batch.append(data_dict)
         if if_print:
-            print(self.corpus_dict)
-        self.size = len(self.corpus_dict)
+            print(self.corpus_dict_batch)
+        self.size = len(self.corpus_dict_batch)
         if if_print:
             print(self.size)
+
+        # Remember to close file!!
+        load_f.close()
 
     def read_json_files(self, path=json_path, if_print=False):
         with open(path, 'r') as load_f:
             for line in load_f:
-                # print(line)
                 try:
                     data_dict = json.loads(line)
                 except:
                     print(line)
-                self.corpus_dict.append(data_dict)
+                self.corpus_dict_batch.append(data_dict)
         if (if_print):
-            print(self.corpus_dict)
-        self.size = len(self.corpus_dict)
+            print(self.corpus_dict_batch)
+        self.size = len(self.corpus_dict_batch)
         if (if_print):
             print(self.size)
 
@@ -72,7 +81,7 @@ class Data:
 
         :return:
         """
-        for each_json_tweet in self.corpus_dict:
+        for each_json_tweet in self.corpus_dict_batch:
             if "text"not in each_json_tweet:continue
             each_text = each_json_tweet["text"]
 
@@ -81,10 +90,10 @@ class Data:
             each_text = re_expression.sub("", each_text)
 
             # to check out which language is used, choose English only
-            if utils.lang_detect(each_text) != "en":
-                continue
+            # if utils.lang_detect(each_text) != "en":
+            #     continue
 
-            self.text_array.append(each_text)
+            # self.text_array.append(each_text)
             # get label for each text, trangforming it to 0 or 1.
             if "ifFluRelated" in each_json_tweet.keys():
                 if each_json_tweet["ifFluRelated"]:
@@ -105,7 +114,7 @@ class Data:
 
             self.time.append((year, month, date))
 
-        print(self.text_array)
+        # print(self.text_array)
         print(self.Y)
 
     def n_gram(self):
@@ -113,19 +122,26 @@ class Data:
         vectorizer = CountVectorizer(ngram_range=(1, 3), token_pattern=r'(\w+)')
         # Produce Feature Vector:
         X = vectorizer.fit_transform(self.text_array)
-        self.X = X
+        # use scipy scr_matrix
+        self.X = csr_matrix(X)
         print(vectorizer.get_feature_names())
 
-def split_data_by_time(X, Y, time):
+        # Free memory after extracting data
+        from sklearn.externals import joblib
+        joblib.dump(X.tocsr(), 'dataset.joblib')
+
+
+def split_data_by_time(X, Y, time, split_dict=None):
     """
     给定训练集
     :param X:训练输入数据(训练集/测试集)数组（暂时没有用到该参数，未来拓展该函数api时用）
     :param Y:01数组，0表示X数组相应位置的tweet与流感有关，1表示与流感无关
     :param time:该数据创建的时间
+    :param split_dict: 字典类型，存储每年每周的tweet总条数以及与疾病相关的条数
     :return:字典{"年份"：{"周数",[与流感有关的数据数量,该周数据总数量],...},...}
     """
-
-    split_dict = {}
+    if split_dict is None:
+        split_dict = {}
     i = 0
     for each_time in time:
         (year, month, date) = each_time
@@ -137,16 +153,11 @@ def split_data_by_time(X, Y, time):
 
         if str_week not in split_dict[str_year].keys():
             split_dict[str_year][str_week] = [0, 0]
-            if X is not None:
-                split_dict[str_year][str_week].append([])
 
         if Y[i]:
             split_dict[str_year][str_week][0] += 1
-            if X is not None:
-                split_dict[str_year][str_week][2].append(X[i])
 
         split_dict[str_year][str_week][1] += 1
-
 
         i += 1
 

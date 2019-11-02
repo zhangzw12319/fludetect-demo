@@ -9,43 +9,58 @@ import utils
 import matplotlib.pyplot as plt
 from pandas.plotting import register_matplotlib_converters
 from sklearn.model_selection import train_test_split
+import time
 
 register_matplotlib_converters()
-
+gp_input_dict={}
+gp_output_dict={}
 
 # get all paths for dataset(json files)
 
 data = Data()
-all_paths = utils.all_path(r"E:\try_demo")
+all_paths = utils.all_path(r"F:\twitter13\2009")
+print(time.asctime(time.localtime(time.time())))
 print(all_paths)
+
 
 # read all of the json files and pack it into a whole dict
 
+
 for each_path in all_paths:
+    print(each_path)
     data.read_json_files(each_path)
+    # extract text from the "text" column in each line, and label it
+    data.extract_text_and_label()
+    print(time.asctime(time.localtime(time.time())))
+    print("Data Extracting and Labeling Finished...")
 
-# extract text from the "text" column in each line, and label it
-data.extract_text_and_label()
+    # use CountVectorizer from sklearn.feature_extraction.text to bagging words(n-gram)
+    # data.n_gram()
 
-# use CountVectorizer from sklearn.feature_extraction.text to bagging words(n-gram)
-data.n_gram()
+    # print(time.asctime(time.localtime(time.time())))
+    # print("Word Embedding Finished...")
 
-# use LogisticRegression or svm_basic to train the filter
-# which will be used to automatically filter tweets related to flu
+    # use LogisticRegression or svm_basic to train the filter
+    # which will be used to automatically filter tweets related to flu
 
-utils.LogisticRegression(data)
-# svm_basic(data)
+    # utils.LogisticRegression(data)
+    # svm_basic(data)
 
-# Then we will use Gassian Regression(GP or gp) to predict the ILL rate.
-# First we want to get the input data and output label for GP model.
-# In this step, we have to split the input data by its created time and
-# categorize them into different years and different weeks in the year.
-# Format for 'gp_input_dict' : {"2019":{"47":[Num of Related, Total]},...}
-# Format for 'gp_output_dict' : {"2019":{"47":[Weighted ILL rates, Unweighted ILL rates]},...}
+    # print(time.asctime(time.localtime(time.time())))
+    # print("Logistic Regression Finished...")
 
+    # Then we will use Gassian Regression(GP or gp) to predict the ILL rate.
+    # First we want to get the input data and output label for GP model.
+    # In this step, we have to split the input data by its created time and
+    # categorize them into different years and different weeks in the year.
+    # Format for 'gp_input_dict' : {"2019":{"47":[Num of Related, Total]},...}
+    # Format for 'gp_output_dict' : {"2019":{"47":[Weighted ILL rates, Unweighted ILL rates]},...}
 
-gp_input_dict = preP.split_data_by_time(X=None, Y=data.Y, time=data.time)
-gp_output_dict = preP.read_CSV("ILINet.csv")
+    gp_input_dict = preP.split_data_by_time(X=None, Y=data.Y, time=data.time, split_dict=gp_input_dict)
+    gp_output_dict = preP.read_CSV("ILINet.csv")
+
+    data.clear_data()
+
 
 print(gp_input_dict)
 print(gp_output_dict)
@@ -93,6 +108,9 @@ print(gp_information)
 # use sklearn GaussianProcessRegressor to train and test
 X_train, X_test, Y_train, Y_test = train_test_split(gp_X, gp_Y_weighted, test_size=0.5)
 prediction = Simple_GP.Simple_GP(np.array(X_train).reshape(-1, 1), np.array(gp_X).reshape(-1, 1), np.array(Y_train), np.array(gp_Y_weighted))
+
+print(time.asctime(time.localtime(time.time())))
+print("Gaussian Regression Finished...")
 
 # plot it
 axe_x = [str(year)+'-'+str(week) for year, week in gp_information ]

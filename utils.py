@@ -1,6 +1,9 @@
 from sklearn.linear_model import LogisticRegressionCV
+# when facing super large dataset, using SGDClasifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+
 from sklearn.svm import SVC
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -103,7 +106,7 @@ def get_day_of_year(year, month, day):
 
     return days_of_31_num * 31 + days_of_30_num * 30 + (29 if is_leap_year(year) else 28) + day
 
-def LogisticRegression(data, cv_fold=2):
+def LogisticRegression(data, cv_fold=5):
     # print(data.X.__sizeof__(),data.Y.__sizeof__())
     X_train, X_test, Y_train, Y_test = train_test_split(data.X, data.Y, test_size=0.05)
     lr = LogisticRegressionCV(Cs=np.logspace(-4, 1, 50), cv=cv_fold, fit_intercept=True, penalty="l2",
@@ -113,6 +116,16 @@ def LogisticRegression(data, cv_fold=2):
     print("prediction=", prediction)
     print("results=", Y_test)
     print(classification_report(Y_test, prediction))
+
+def LogisticRegression_SGDClassifier(data, max_iter=6000,tol=1e-3, valid_frac=0.2):
+    clf = SGDClassifier(loss='log', max_iter=max_iter, tol=tol, validation_fraction=valid_frac)
+    X_train, X_test, Y_train, Y_test = train_test_split(data.X, data.Y, test_size=0.05)
+    clf.fit(X_train, Y_train)
+    prediction = clf.predict(X_test)
+    print("prediction=", prediction)
+    print("results=", Y_test)
+    print(classification_report(Y_test, prediction))
+
 
 def svm_basic(data):
     clf = SVC(gamma='auto')
