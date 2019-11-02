@@ -1,6 +1,6 @@
 # This is a simple flu-detector for twitter tweets.
 
-from nltk.twitter import Query, Streamer, Twitter, TweetViewer, TweetWriter, credsfromfile
+# from nltk.twitter import Streamer, Twitter, TweetViewer, TweetWriter, credsfromfile
 import preProcessing as preP
 from preProcessing import Data
 import numpy as np
@@ -18,7 +18,7 @@ gp_output_dict={}
 # get all paths for dataset(json files)
 
 data = Data()
-all_paths = utils.all_path(r"F:\twitter13\2009")
+all_paths = utils.all_path(r"/home/zzw/twitter13")
 print(time.asctime(time.localtime(time.time())))
 print(all_paths)
 
@@ -59,11 +59,13 @@ for each_path in all_paths:
     gp_input_dict = preP.split_data_by_time(X=None, Y=data.Y, time=data.time, split_dict=gp_input_dict)
     gp_output_dict = preP.read_CSV("ILINet.csv")
 
-    data.clear_data()
+    data.clear_data(
 
 
 print(gp_input_dict)
 print(gp_output_dict)
+
+# bbbbbbbbb
 
 
 # 'gp_X' : [Arrays of "Related/Total" for each week]
