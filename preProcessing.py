@@ -144,10 +144,14 @@ def split_data_by_time(X, Y, time, split_dict=None):
         split_dict = {}
     i = 0
     for each_time in time:
+        # 通过年月日计算在这一天属于当年的哪一周
         (year, month, date) = each_time
-        week = int(np.trunc(utils.get_day_of_year(year, month, date) / 7)) + 1
+        from datetime import datetime
+        str_time = datetime.strptime(str(year) + '-' + str(month) + '-'+str(date), "%Y-%m-%d")
+        week = int(str_time.strftime("%W"))
         str_year = str(year)
         str_week = str(week)
+
         if str_year not in split_dict.keys():
             split_dict[str_year] = {}
 
